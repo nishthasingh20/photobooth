@@ -24,10 +24,10 @@ const StickerPicker = ({ onAddSticker, selectedStickers }: StickerPickerProps) =
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="mt-4">
+    <div className="mt-4 min-h-[200px]">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+        className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors w-full justify-center lg:justify-start"
       >
         <span className="text-lg">🎨</span>
         {isExpanded ? "Hide Stickers" : "Add Stickers"}
@@ -36,8 +36,10 @@ const StickerPicker = ({ onAddSticker, selectedStickers }: StickerPickerProps) =
         </span>
       </button>
 
-      {isExpanded && (
-        <div className="mt-3 animate-fade-in rounded-xl bg-card/50 p-3 border border-border/50">
+      <div className={`mt-3 transition-all duration-300 overflow-hidden ${
+        isExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+      }`}>
+        <div className="animate-fade-in rounded-xl bg-card/50 p-3 border border-border/50">
           <p className="text-xs text-muted-foreground mb-2">
             Tap to add stickers to your strip!
           </p>
@@ -53,7 +55,7 @@ const StickerPicker = ({ onAddSticker, selectedStickers }: StickerPickerProps) =
             ))}
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

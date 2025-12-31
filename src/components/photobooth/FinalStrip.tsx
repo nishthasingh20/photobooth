@@ -153,7 +153,7 @@ const FinalStrip = ({ photos, templateId }: FinalStripProps) => {
   };
 
   return (
-    <div className="flex flex-col items-center gap-8 lg:flex-row lg:items-start lg:justify-center">
+    <div className="flex flex-col items-center gap-8 lg:gap-12 lg:flex-row lg:items-start lg:justify-center">
       <div className="relative">
         <div
           ref={stripRef}
@@ -221,8 +221,6 @@ const FinalStrip = ({ photos, templateId }: FinalStripProps) => {
             </div>
           ))}
         </div>
-
-        <StickerPicker onAddSticker={handleAddSticker} selectedStickers={stickers} />
         
         {stickers.length > 0 && (
           <p className="mt-2 text-xs text-center text-muted-foreground">
@@ -231,12 +229,12 @@ const FinalStrip = ({ photos, templateId }: FinalStripProps) => {
         )}
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 w-full lg:w-auto lg:min-w-[200px]">
         <Button
           variant="default"
           size="lg"
           onClick={handleDownload}
-          className="gap-2 rounded-xl bg-primary px-8"
+          className="gap-2 rounded-xl bg-primary px-8 w-full lg:w-auto"
         >
           <Download className="h-4 w-4" />
           Download Image
@@ -245,18 +243,22 @@ const FinalStrip = ({ photos, templateId }: FinalStripProps) => {
           variant="secondary"
           size="lg"
           onClick={handleShare}
-          className="gap-2 rounded-xl px-8"
+          className="gap-2 rounded-xl px-8 w-full lg:w-auto"
         >
           <Share2 className="h-4 w-4" />
           Share Link
         </Button>
+        
+        <div className="w-full lg:w-auto">
+          <StickerPicker onAddSticker={handleAddSticker} selectedStickers={stickers} />
+        </div>
         
         {stickers.length > 0 && (
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setStickers([])}
-            className="gap-2 text-muted-foreground hover:text-destructive"
+            className="gap-2 text-muted-foreground hover:text-destructive w-full lg:w-auto"
           >
             <Trash2 className="h-3 w-3" />
             Clear all stickers

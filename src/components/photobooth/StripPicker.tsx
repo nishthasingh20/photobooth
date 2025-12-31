@@ -23,11 +23,11 @@ interface StripPickerProps {
 
 const StripPicker = ({ selectedTemplate, onSelectTemplate }: StripPickerProps) => {
   return (
-    <div className="animate-slide-up">
+    <div className="animate-slide-up text-center">
       <h3 className="mb-4 font-display text-lg font-semibold text-foreground">
         Choose a Strip Template
       </h3>
-      <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+      <div className="flex justify-center gap-4 overflow-x-auto pb-2 scrollbar-hide">
         {templates.map((template) => (
           <button
             key={template.id}

@@ -20,13 +20,11 @@ const CameraSection = ({ onCapture, canCapture }: CameraSectionProps) => {
         video: { facingMode: "user", width: 640, height: 480 },
         audio: false,
       });
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
       setStream(mediaStream);
       setIsCameraOn(true);
     } catch (err) {
       console.error("Error accessing camera:", err);
+      alert("Failed to access camera. Please check permissions.");
     }
   };
 
@@ -64,7 +62,21 @@ const CameraSection = ({ onCapture, canCapture }: CameraSectionProps) => {
     setTimeout(() => setIsCapturing(false), 200);
   };
 
+  // Handle video stream assignment and playback
   useEffect(() => {
+    if (stream && videoRef.current) {
+      videoRef.current.srcObject = stream;
+      videoRef.current.onloadedmetadata = () => {
+        if (videoRef.current) {
+          videoRef.current.play().catch((err) => {
+            console.error("Error playing video:", err);
+          });
+        }
+      };
+    } else if (!stream && videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+
     return () => {
       if (stream) {
         stream.getTracks().forEach((track) => track.stop());
@@ -74,20 +86,19 @@ const CameraSection = ({ onCapture, canCapture }: CameraSectionProps) => {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="camera-container aspect-[4/3] w-full">
-        {isCameraOn ? (
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className={`h-full w-full object-cover transition-all duration-200 ${
-              isCapturing ? "brightness-150" : ""
-            }`}
-            style={{ transform: "scaleX(-1)" }}
-          />
-        ) : (
-          <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-arctic to-golden/30">
+      <div className="camera-container aspect-[4/3] w-full relative">
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className={`absolute inset-0 h-full w-full object-cover transition-all duration-200 ${
+            isCapturing ? "brightness-150" : ""
+          } ${isCameraOn ? "z-10" : "z-0 opacity-0"}`}
+          style={{ transform: "scaleX(-1)" }}
+        />
+        {!isCameraOn && (
+          <div className="absolute inset-0 z-20 flex h-full w-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-arctic to-golden/30">
             <CameraOff className="h-16 w-16 text-muted-foreground/50" />
             <p className="text-sm text-muted-foreground">Camera is off</p>
           </div>

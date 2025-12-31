@@ -75,7 +75,6 @@ const Index = () => {
                 
                 {appState === "askMore" && (
                   <MorePhotosPrompt
-                    onContinue={handleContinue}
                     onProceed={handleProceed}
                   />
                 )}
@@ -124,7 +123,7 @@ const Index = () => {
 
       <footer className="mt-12 text-center">
         <p className="text-xs text-muted-foreground/60">
-          Made with care • Portfolio Project
+          Made with ❤️ by Nishtha Singh
         </p>
       </footer>
     </div>
