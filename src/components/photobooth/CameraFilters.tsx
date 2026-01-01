@@ -16,7 +16,7 @@ const filters: { id: FilterType; name: string; preview: string }[] = [
 
 const CameraFilters = ({ selectedFilter, onFilterChange }: CameraFiltersProps) => {
   return (
-    <div className="flex items-center justify-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+    <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
       {filters.map((filter) => (
         <button
           key={filter.id}

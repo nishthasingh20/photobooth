@@ -19,6 +19,11 @@ const Index = () => {
     setPhotos(newPhotos);
   };
 
+  const handleRetake = (index: number) => {
+    const newPhotos = photos.filter((_, i) => i !== index);
+    setPhotos(newPhotos);
+  };
+
   const handleProceed = () => {
     setAppState("selectTemplate");
   };
@@ -65,7 +70,7 @@ const Index = () => {
 
               {/* Photo Preview Stack */}
               <div className="order-2 min-h-[300px]">
-                <PhotoPreviewStack photos={photos} />
+                <PhotoPreviewStack photos={photos} onRetake={handleRetake} />
                 
                 {/* Proceed Button - shows when 3 photos are captured */}
                 {appState === "capturing" && photos.length === 3 && (

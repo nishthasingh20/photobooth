@@ -15,6 +15,8 @@ const CameraSection = ({ onCapture, canCapture }: CameraSectionProps) => {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<FilterType>("none");
+  const [timer, setTimer] = useState<number | null>(null);
+  const [showFlash, setShowFlash] = useState(false);
 
   const startCamera = async () => {
     try {
@@ -44,36 +46,63 @@ const CameraSection = ({ onCapture, canCapture }: CameraSectionProps) => {
   const capturePhoto = () => {
     if (!videoRef.current || !canvasRef.current || !canCapture) return;
 
-    setIsCapturing(true);
-    
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    const doCapture = () => {
+      setIsCapturing(true);
+      setShowFlash(true);
+      
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      if (!video || !canvas) return;
+      
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
 
-    const ctx = canvas.getContext("2d");
-    if (ctx) {
-      // Save context state
-      ctx.save();
-      
-      // Mirror the image for selfie-style
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
-      ctx.drawImage(video, 0, 0);
-      
-      // Restore context state
-      ctx.restore();
-      
-      // Apply selected filter
-      if (selectedFilter !== "none") {
-        applyFilterWithDimensions(ctx, canvas, selectedFilter);
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        // Save context state
+        ctx.save();
+        
+        // Mirror the image for selfie-style
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, 0, 0);
+        
+        // Restore context state
+        ctx.restore();
+        
+        // Apply selected filter
+        if (selectedFilter !== "none") {
+          applyFilterWithDimensions(ctx, canvas, selectedFilter);
+        }
+        
+        const imageData = canvas.toDataURL("image/jpeg", 0.9);
+        onCapture(imageData);
       }
-      
-      const imageData = canvas.toDataURL("image/jpeg", 0.9);
-      onCapture(imageData);
-    }
 
-    setTimeout(() => setIsCapturing(false), 200);
+      setTimeout(() => {
+        setIsCapturing(false);
+        setShowFlash(false);
+      }, 200);
+    };
+
+    if (timer && timer > 0) {
+      // Start countdown
+      let countdown = timer;
+      setTimer(countdown);
+      
+      const countdownInterval = setInterval(() => {
+        countdown--;
+        setTimer(countdown);
+        
+        if (countdown <= 0) {
+          clearInterval(countdownInterval);
+          setTimer(null);
+          doCapture();
+        }
+      }, 1000);
+    } else {
+      doCapture();
+    }
   };
 
   // Handle video stream assignment and playback
@@ -133,6 +162,16 @@ const CameraSection = ({ onCapture, canCapture }: CameraSectionProps) => {
             filter: getVideoFilter(),
           }}
         />
+        {showFlash && (
+          <div className="absolute inset-0 z-30 bg-white/40 animate-flash" />
+        )}
+        {timer !== null && timer > 0 && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center">
+            <div className="bg-black/60 text-white rounded-full w-24 h-24 flex items-center justify-center text-4xl font-bold">
+              {timer}
+            </div>
+          </div>
+        )}
         {!isCameraOn && (
           <div className="absolute inset-0 z-20 flex h-full w-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-arctic to-golden/30">
             <CameraOff className="h-16 w-16 text-muted-foreground/50" />
@@ -142,18 +181,52 @@ const CameraSection = ({ onCapture, canCapture }: CameraSectionProps) => {
         <canvas ref={canvasRef} className="hidden" />
       </div>
 
-      {/* Filter Selector */}
+      {/* Filter Selector and Timer */}
       {isCameraOn && (
         <div className={`w-full rounded-xl bg-card/50 p-3 border border-border/50 transition-all duration-300 overflow-hidden ${
           isCameraOn ? "animate-slide-down opacity-100" : "max-h-0 opacity-0"
         }`}>
-          <h4 className="text-sm font-semibold text-foreground mb-3 text-center">
-            Select a filter
-          </h4>
-          <CameraFilters 
-            selectedFilter={selectedFilter} 
-            onFilterChange={setSelectedFilter} 
-          />
+          <div className="grid grid-cols-2 gap-4">
+            {/* Filter Section */}
+            <div className="flex flex-col">
+              <h4 className="text-sm font-semibold text-foreground mb-3 text-center">
+                Select a filter
+              </h4>
+              <CameraFilters 
+                selectedFilter={selectedFilter} 
+                onFilterChange={setSelectedFilter} 
+              />
+            </div>
+            
+            {/* Timer Section */}
+            <div className="flex flex-col border-l border-border/50 pl-4">
+              <h4 className="text-sm font-semibold text-foreground mb-3 text-center">
+                Timer
+              </h4>
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  onClick={() => setTimer(timer === 3 ? null : 3)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    timer === 3
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-card text-muted-foreground hover:bg-card/80"
+                  }`}
+                >
+                  3s
+                </button>
+                <button
+                  onClick={() => setTimer(timer === 5 ? null : 5)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    timer === 5
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-card text-muted-foreground hover:bg-card/80"
+                  }`}
+                >
+                  5s
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

@@ -193,6 +193,22 @@
     }
   }
 
+  .animate-flash {
+    animation: flash 0.2s ease-out forwards;
+  }
+
+  @keyframes flash {
+    0% {
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;

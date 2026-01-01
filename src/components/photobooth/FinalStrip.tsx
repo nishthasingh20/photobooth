@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback } from "react";
-import { Download, Share2, Trash2, Move } from "lucide-react";
+import { Download, Share2, Trash2, Move, RotateCw, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { templates } from "./StripPicker";
 import { toast } from "@/hooks/use-toast";
@@ -20,6 +20,10 @@ const FinalStrip = ({ photos, templateId }: FinalStripProps) => {
   const [dragType, setDragType] = useState<"sticker" | "text" | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [stickerPickerExpanded, setStickerPickerExpanded] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedType, setSelectedType] = useState<"sticker" | "text" | null>(null);
+  const [isRotating, setIsRotating] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
 
   const handleAddSticker = (emoji: string) => {
     const newSticker: Sticker = {
@@ -63,8 +67,19 @@ const FinalStrip = ({ photos, templateId }: FinalStripProps) => {
     setTexts(texts.filter((t) => t.id !== id));
   };
 
+  const handleStickerClick = (e: React.MouseEvent, sticker: Sticker) => {
+    e.stopPropagation();
+    if (selectedId === sticker.id && selectedType === "sticker") {
+      setSelectedId(null);
+      setSelectedType(null);
+    } else {
+      setSelectedId(sticker.id);
+      setSelectedType("sticker");
+    }
+  };
+
   const handleMouseDown = (e: React.MouseEvent, sticker: Sticker) => {
-    if (!stripRef.current) return;
+    if (!stripRef.current || isRotating || isResizing) return;
     e.preventDefault();
     
     const rect = stripRef.current.getBoundingClientRect();
@@ -77,10 +92,23 @@ const FinalStrip = ({ photos, templateId }: FinalStripProps) => {
     });
     setDraggingId(sticker.id);
     setDragType("sticker");
+    setSelectedId(sticker.id);
+    setSelectedType("sticker");
+  };
+
+  const handleTextClick = (e: React.MouseEvent, text: TextElement) => {
+    e.stopPropagation();
+    if (selectedId === text.id && selectedType === "text") {
+      setSelectedId(null);
+      setSelectedType(null);
+    } else {
+      setSelectedId(text.id);
+      setSelectedType("text");
+    }
   };
 
   const handleTextMouseDown = (e: React.MouseEvent, text: TextElement) => {
-    if (!stripRef.current) return;
+    if (!stripRef.current || isRotating || isResizing) return;
     e.preventDefault();
     
     const rect = stripRef.current.getBoundingClientRect();
@@ -93,33 +121,104 @@ const FinalStrip = ({ photos, templateId }: FinalStripProps) => {
     });
     setDraggingId(text.id);
     setDragType("text");
+    setSelectedId(text.id);
+    setSelectedType("text");
+  };
+
+  const handleRotateStart = (e: React.MouseEvent, id: string, type: "sticker" | "text") => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsRotating(true);
+    setDraggingId(id);
+    setDragType(type);
+  };
+
+  const handleResizeStart = (e: React.MouseEvent, id: string, type: "sticker" | "text") => {
+    e.stopPropagation();
+    setIsResizing(true);
+    setDraggingId(id);
+    setDragType(type);
   };
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!draggingId || !stripRef.current || !dragType) return;
     
     const rect = stripRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left - dragOffset.x) / rect.width) * 100;
-    const y = ((e.clientY - rect.top - dragOffset.y) / rect.height) * 100;
     
-    // Clamp values to keep within bounds
-    const clampedX = Math.max(5, Math.min(95, x));
-    const clampedY = Math.max(2, Math.min(98, y));
-    
-    if (dragType === "sticker") {
-      setStickers(prev => prev.map(s => 
-        s.id === draggingId ? { ...s, x: clampedX, y: clampedY } : s
-      ));
-    } else if (dragType === "text") {
-      setTexts(prev => prev.map(t => 
-        t.id === draggingId ? { ...t, x: clampedX, y: clampedY } : t
-      ));
+    if (isRotating) {
+      const element = dragType === "sticker" 
+        ? stickers.find(s => s.id === draggingId)
+        : texts.find(t => t.id === draggingId);
+      
+      if (!element) return;
+      
+      const elementX = rect.left + (element.x / 100) * rect.width;
+      const elementY = rect.top + (element.y / 100) * rect.height;
+      const angle = Math.atan2(e.clientY - elementY, e.clientX - elementX) * (180 / Math.PI) + 90;
+      
+      if (dragType === "sticker") {
+        setStickers(prev => prev.map(s => 
+          s.id === draggingId ? { ...s, rotation: angle } : s
+        ));
+      } else if (dragType === "text") {
+        setTexts(prev => prev.map(t => 
+          t.id === draggingId ? { ...t, rotation: angle } : t
+        ));
+      }
+    } else if (isResizing) {
+      const element = dragType === "sticker" 
+        ? stickers.find(s => s.id === draggingId)
+        : texts.find(t => t.id === draggingId);
+      
+      if (!element) return;
+      
+      const elementX = rect.left + (element.x / 100) * rect.width;
+      const elementY = rect.top + (element.y / 100) * rect.height;
+      const distance = Math.sqrt(
+        Math.pow(e.clientX - elementX, 2) + Math.pow(e.clientY - elementY, 2)
+      );
+      
+      const baseSize = dragType === "sticker" 
+        ? (element as Sticker).size || 28
+        : (element as TextElement).fontSize || 16;
+      
+      const scaleFactor = distance / (baseSize * 2);
+      const newSize = Math.max(12, Math.min(60, baseSize * scaleFactor));
+      
+      if (dragType === "sticker") {
+        setStickers(prev => prev.map(s => 
+          s.id === draggingId ? { ...s, size: newSize } : s
+        ));
+      } else if (dragType === "text") {
+        setTexts(prev => prev.map(t => 
+          t.id === draggingId ? { ...t, fontSize: newSize } : t
+        ));
+      }
+    } else {
+      const x = ((e.clientX - rect.left - dragOffset.x) / rect.width) * 100;
+      const y = ((e.clientY - rect.top - dragOffset.y) / rect.height) * 100;
+      
+      // Clamp values to keep within bounds
+      const clampedX = Math.max(5, Math.min(95, x));
+      const clampedY = Math.max(2, Math.min(98, y));
+      
+      if (dragType === "sticker") {
+        setStickers(prev => prev.map(s => 
+          s.id === draggingId ? { ...s, x: clampedX, y: clampedY } : s
+        ));
+      } else if (dragType === "text") {
+        setTexts(prev => prev.map(t => 
+          t.id === draggingId ? { ...t, x: clampedX, y: clampedY } : t
+        ));
+      }
     }
-  }, [draggingId, dragOffset, dragType]);
+  }, [draggingId, dragOffset, dragType, isRotating, isResizing, stickers, texts]);
 
   const handleMouseUp = () => {
     setDraggingId(null);
     setDragType(null);
+    setIsRotating(false);
+    setIsResizing(false);
   };
 
   const handleTouchStart = (e: React.TouchEvent, sticker: Sticker) => {
@@ -233,12 +332,19 @@ const FinalStrip = ({ photos, templateId }: FinalStripProps) => {
       <div className="relative">
         <div
           ref={stripRef}
-          className={`${template.bgColor} relative flex w-64 flex-col gap-3 rounded-2xl p-4 shadow-soft select-none`}
+          className={`${template.bgColor} relative flex w-64 flex-col gap-3 rounded-2xl p-4 shadow-soft select-none strip-bg`}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleMouseUp}
+          onClick={(e) => {
+            const target = e.target as HTMLElement;
+            if (target === stripRef.current || target.classList.contains('strip-bg')) {
+              setSelectedId(null);
+              setSelectedType(null);
+            }
+          }}
         >
           {photos.slice(0, 4).map((photo, index) => (
             <div
@@ -275,6 +381,7 @@ const FinalStrip = ({ photos, templateId }: FinalStripProps) => {
                 fontSize: `${sticker.size}px`,
                 transform: `translate(-50%, -50%) rotate(${sticker.rotation}deg)`,
               }}
+              onClick={(e) => handleStickerClick(e, sticker)}
               onMouseDown={(e) => handleMouseDown(e, sticker)}
               onTouchStart={(e) => handleTouchStart(e, sticker)}
             >
@@ -285,9 +392,25 @@ const FinalStrip = ({ photos, templateId }: FinalStripProps) => {
               >
                 {sticker.emoji}
               </span>
+              {selectedId === sticker.id && selectedType === "sticker" && (
+                <>
+                  <button
+                    onMouseDown={(e) => handleRotateStart(e, sticker.id, "sticker")}
+                    className="absolute -top-6 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground rounded-full p-1 hover:scale-110 transition-transform z-30"
+                  >
+                    <RotateCw className="h-3 w-3" />
+                  </button>
+                  <button
+                    onMouseDown={(e) => handleResizeStart(e, sticker.id, "sticker")}
+                    className="absolute -bottom-6 right-0 bg-primary text-primary-foreground rounded-full p-1 hover:scale-110 transition-transform z-30"
+                  >
+                    <Maximize2 className="h-3 w-3" />
+                  </button>
+                </>
+              )}
               <button
                 onClick={(e) => handleRemoveSticker(sticker.id, e)}
-                className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-destructive text-destructive-foreground rounded-full p-0.5 hover:scale-110"
+                className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-destructive text-destructive-foreground rounded-full p-0.5 hover:scale-110 z-30"
               >
                 <Trash2 className="h-3 w-3" />
               </button>
@@ -310,6 +433,7 @@ const FinalStrip = ({ photos, templateId }: FinalStripProps) => {
                 fontFamily: text.fontFamily,
                 transform: `translate(-50%, -50%) rotate(${text.rotation}deg)`,
               }}
+              onClick={(e) => handleTextClick(e, text)}
               onMouseDown={(e) => handleTextMouseDown(e, text)}
               onTouchStart={(e) => handleTextTouchStart(e, text)}
             >
@@ -320,9 +444,25 @@ const FinalStrip = ({ photos, templateId }: FinalStripProps) => {
               >
                 {text.text}
               </span>
+              {selectedId === text.id && selectedType === "text" && (
+                <>
+                  <button
+                    onMouseDown={(e) => handleRotateStart(e, text.id, "text")}
+                    className="absolute -top-6 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground rounded-full p-1 hover:scale-110 transition-transform z-30"
+                  >
+                    <RotateCw className="h-3 w-3" />
+                  </button>
+                  <button
+                    onMouseDown={(e) => handleResizeStart(e, text.id, "text")}
+                    className="absolute -bottom-6 right-0 bg-primary text-primary-foreground rounded-full p-1 hover:scale-110 transition-transform z-30"
+                  >
+                    <Maximize2 className="h-3 w-3" />
+                  </button>
+                </>
+              )}
               <button
                 onClick={(e) => handleRemoveText(text.id, e)}
-                className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-destructive text-destructive-foreground rounded-full p-0.5 hover:scale-110"
+                className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-destructive text-destructive-foreground rounded-full p-0.5 hover:scale-110 z-30"
               >
                 <Trash2 className="h-3 w-3" />
               </button>

@@ -1,8 +1,12 @@
+import { RotateCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
 interface PhotoPreviewStackProps {
   photos: string[];
+  onRetake?: (index: number) => void;
 }
 
-const PhotoPreviewStack = ({ photos }: PhotoPreviewStackProps) => {
+const PhotoPreviewStack = ({ photos, onRetake }: PhotoPreviewStackProps) => {
   if (photos.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-border/60 bg-card/50 p-6">
@@ -36,10 +40,21 @@ const PhotoPreviewStack = ({ photos }: PhotoPreviewStackProps) => {
             className="w-full"
             style={{ display: "block" }}
           />
-          <div className="bg-secondary/50 px-3 py-1.5">
+          <div className="bg-secondary/50 px-3 py-1.5 flex items-center justify-between">
             <span className="text-xs font-medium text-muted-foreground">
               Photo {index + 1}
             </span>
+            {onRetake && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onRetake(index)}
+                className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+              >
+                <RotateCcw className="h-3 w-3 mr-1" />
+                Retake
+              </Button>
+            )}
           </div>
         </div>
       ))}

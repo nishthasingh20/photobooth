@@ -163,6 +163,18 @@ const TextPicker = ({ onAddText, selectedTexts, onUpdateText, stickerPickerExpan
                       />
                     ))}
                   </div>
+                  <select
+                    value={textEl.fontFamily}
+                    onChange={(e) => onUpdateText(textEl.id, { fontFamily: e.target.value })}
+                    className="w-full px-2 py-1 rounded bg-background/50 border border-border/30 text-xs focus:outline-none focus:ring-1 focus:ring-primary/50"
+                    style={{ fontFamily: textEl.fontFamily }}
+                  >
+                    {availableFonts.map((font) => (
+                      <option key={font.value} value={font.value} style={{ fontFamily: font.value }}>
+                        {font.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               ))}
             </div>
