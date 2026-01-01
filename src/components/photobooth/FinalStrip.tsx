@@ -226,7 +226,45 @@ const FinalStrip = ({ photos, templateId }: FinalStripProps) => {
   const handleDownload = async () => {
     if (!stripRef.current) return;
 
+    // Helper: parse rgb/rgba strings
+    const parseRGBA = (str: string | null) => {
+      if (!str) return null;
+      const m = str.match(/rgba?\(([^)]+)\)/);
+      if (!m) return null;
+      const parts = m[1].split(",").map(p => parseFloat(p.trim()));
+      const r = parts[0] || 0;
+      const g = parts[1] || 0;
+      const b = parts[2] || 0;
+      const a = parts.length === 4 ? parts[3] : 1;
+      return { r, g, b, a };
+    };
+
+    let el: HTMLElement | null = null;
+    let originalInline = "";
+
     try {
+      el = stripRef.current as HTMLElement;
+      const computedStyle = window.getComputedStyle(el as Element);
+      const computedBackground = computedStyle.background || computedStyle.backgroundColor || null;
+      originalInline = el.style.background || "";
+
+      // If background is an rgba with alpha, blend it with the page background to create an opaque color
+      const fg = parseRGBA(computedBackground as string);
+      if (fg && fg.a < 1) {
+        const bodyStyle = window.getComputedStyle(document.body as Element);
+        const bodyBg = bodyStyle.backgroundColor || "rgb(255,255,255)";
+        const bg = parseRGBA(bodyBg) || { r: 255, g: 255, b: 255, a: 1 };
+
+        const r = Math.round(fg.r * fg.a + bg.r * (1 - fg.a));
+        const g = Math.round(fg.g * fg.a + bg.g * (1 - fg.a));
+        const b = Math.round(fg.b * fg.a + bg.b * (1 - fg.a));
+
+        el.style.background = `rgb(${r}, ${g}, ${b})`;
+      } else if (computedBackground) {
+        // If it's a gradient or solid color, inline it directly
+        el.style.background = computedBackground as string;
+      }
+
       const html2canvas = (await import("html2canvas")).default;
       const canvas = await html2canvas(stripRef.current, {
         scale: 2,
@@ -250,6 +288,10 @@ const FinalStrip = ({ photos, templateId }: FinalStripProps) => {
         description: "Please try again.",
         variant: "destructive",
       });
+    } finally {
+      if (el) {
+        el.style.background = originalInline;
+      }
     }
   };
 
@@ -355,7 +397,8 @@ const FinalStrip = ({ photos, templateId }: FinalStripProps) => {
                     <Maximize2 className="h-3 w-3" />
                   </button>
                 </>
-              )} */}
+              )} 
+               */}
               <button
                 onClick={(e) => handleRemoveSticker(sticker.id, e)}
                 className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-destructive text-destructive-foreground rounded-full p-0.5 hover:scale-110 z-30"
