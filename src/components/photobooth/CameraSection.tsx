@@ -15,7 +15,9 @@ const CameraSection = ({ onCapture, canCapture }: CameraSectionProps) => {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<FilterType>("none");
-  const [timer, setTimer] = useState<number | null>(null);
+  // Timer: timerSetting is the chosen timer (3 or 5) and countdown is the active countdown
+  const [timerSetting, setTimerSetting] = useState<number | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
   const [showFlash, setShowFlash] = useState(false);
 
   const startCamera = async () => {
@@ -85,18 +87,18 @@ const CameraSection = ({ onCapture, canCapture }: CameraSectionProps) => {
       }, 200);
     };
 
-    if (timer && timer > 0) {
-      // Start countdown
-      let countdown = timer;
-      setTimer(countdown);
-      
+    if (timerSetting && timerSetting > 0) {
+      // Start countdown using separate countdown state so the timer setting highlight doesn't change
+      let c = timerSetting;
+      setCountdown(c);
+
       const countdownInterval = setInterval(() => {
-        countdown--;
-        setTimer(countdown);
-        
-        if (countdown <= 0) {
+        c--;
+        setCountdown(c);
+
+        if (c <= 0) {
           clearInterval(countdownInterval);
-          setTimer(null);
+          setCountdown(null);
           doCapture();
         }
       }, 1000);
@@ -165,10 +167,10 @@ const CameraSection = ({ onCapture, canCapture }: CameraSectionProps) => {
         {showFlash && (
           <div className="absolute inset-0 z-30 bg-white/40 animate-flash" />
         )}
-        {timer !== null && timer > 0 && (
+        {countdown !== null && countdown > 0 && (
           <div className="absolute inset-0 z-30 flex items-center justify-center">
             <div className="bg-black/60 text-white rounded-full w-24 h-24 flex items-center justify-center text-4xl font-bold">
-              {timer}
+              {countdown}
             </div>
           </div>
         )}
@@ -186,9 +188,9 @@ const CameraSection = ({ onCapture, canCapture }: CameraSectionProps) => {
         <div className={`w-full rounded-xl bg-card/50 p-3 border border-border/50 transition-all duration-300 overflow-hidden ${
           isCameraOn ? "animate-slide-down opacity-100" : "max-h-0 opacity-0"
         }`}>
-          <div className="grid grid-cols-2 gap-4">
-            {/* Filter Section */}
-            <div className="flex flex-col">
+          <div className="flex gap-4 items-stretch">
+            {/* Filter Section (flexes to take most space) */}
+            <div className="flex-1 flex flex-col">
               <h4 className="text-sm font-semibold text-foreground mb-3 text-center">
                 Select a filter
               </h4>
@@ -198,16 +200,16 @@ const CameraSection = ({ onCapture, canCapture }: CameraSectionProps) => {
               />
             </div>
             
-            {/* Timer Section */}
-            <div className="flex flex-col border-l border-border/50 pl-4">
+            {/* Timer Section (fixed width to avoid large empty area) */}
+            <div className="w-36 flex flex-col border-l border-border/50 pl-4 items-center justify-center">
               <h4 className="text-sm font-semibold text-foreground mb-3 text-center">
                 Timer
               </h4>
               <div className="flex items-center justify-center gap-2">
                 <button
-                  onClick={() => setTimer(timer === 3 ? null : 3)}
+                  onClick={() => setTimerSetting(timerSetting === 3 ? null : 3)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    timer === 3
+                    timerSetting === 3
                       ? "bg-primary text-primary-foreground"
                       : "bg-card text-muted-foreground hover:bg-card/80"
                   }`}
@@ -215,9 +217,9 @@ const CameraSection = ({ onCapture, canCapture }: CameraSectionProps) => {
                   3s
                 </button>
                 <button
-                  onClick={() => setTimer(timer === 5 ? null : 5)}
+                  onClick={() => setTimerSetting(timerSetting === 5 ? null : 5)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    timer === 5
+                    timerSetting === 5
                       ? "bg-primary text-primary-foreground"
                       : "bg-card text-muted-foreground hover:bg-card/80"
                   }`}
