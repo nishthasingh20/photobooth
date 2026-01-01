@@ -39,9 +39,16 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background px-6 py-8 lg:px-12">
       <header className="mb-8 text-center">
-        <h1 className="font-display text-4xl font-bold text-foreground">
-          ShutterFun
-        </h1>
+        <div className="flex items-center justify-center gap-3 mb-2">
+          <img 
+            src="/ShutterFun-logo.png" 
+            alt="ShutterFun Logo" 
+            className="h-12 w-12 object-contain"
+          />
+          <h1 className="font-display text-4xl font-bold text-foreground">
+            ShutterFun
+          </h1>
+        </div>
         <p className="mt-2 text-sm text-muted-foreground">
           Capture moments, create memories
         </p>
