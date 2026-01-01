@@ -18,15 +18,22 @@ const availableStickers = [
 interface StickerPickerProps {
   onAddSticker: (emoji: string) => void;
   selectedStickers: Sticker[];
+  onExpandedChange?: (expanded: boolean) => void;
 }
 
-const StickerPicker = ({ onAddSticker, selectedStickers }: StickerPickerProps) => {
+const StickerPicker = ({ onAddSticker, selectedStickers, onExpandedChange }: StickerPickerProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const handleToggle = () => {
+    const newState = !isExpanded;
+    setIsExpanded(newState);
+    onExpandedChange?.(newState);
+  };
+
   return (
-    <div className="mt-4 min-h-[200px]">
+    <div className="mt-4">
       <button
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={handleToggle}
         className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors w-full justify-center lg:justify-start"
       >
         <span className="text-lg">🎨</span>
@@ -39,7 +46,7 @@ const StickerPicker = ({ onAddSticker, selectedStickers }: StickerPickerProps) =
       <div className={`mt-3 transition-all duration-300 overflow-hidden ${
         isExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
       }`}>
-        <div className="animate-fade-in rounded-xl bg-card/50 p-3 border border-border/50">
+        <div className="rounded-xl bg-card/50 p-3 border border-border/50">
           <p className="text-xs text-muted-foreground mb-2">
             Tap to add stickers to your strip!
           </p>

@@ -27,7 +27,7 @@ const PhotoPreviewStack = ({ photos }: PhotoPreviewStackProps) => {
       {photos.map((photo, index) => (
         <div
           key={index}
-          className="photo-card animate-photo-in overflow-hidden"
+          className="photo-card animate-photo-in overflow-hidden max-w-[90%] mx-auto"
           style={{ animationDelay: `${index * 0.05}s` }}
         >
           <img

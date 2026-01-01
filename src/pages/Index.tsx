@@ -3,12 +3,11 @@ import CameraSection from "@/components/photobooth/CameraSection";
 import PhotoPreviewStack from "@/components/photobooth/PhotoPreviewStack";
 import StripPicker from "@/components/photobooth/StripPicker";
 import FinalStrip from "@/components/photobooth/FinalStrip";
-import MorePhotosPrompt from "@/components/photobooth/MorePhotosPrompt";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, ArrowRight } from "lucide-react";
 
-type AppState = "capturing" | "askMore" | "bonusCapture" | "selectTemplate" | "finalOutput";
+type AppState = "capturing" | "askMore" | "selectTemplate" | "finalOutput";
 
 const Index = () => {
   const [photos, setPhotos] = useState<string[]>([]);
@@ -18,16 +17,6 @@ const Index = () => {
   const handleCapture = (imageData: string) => {
     const newPhotos = [...photos, imageData];
     setPhotos(newPhotos);
-
-    if (appState === "bonusCapture") {
-      setAppState("selectTemplate");
-    } else if (newPhotos.length >= 3 && appState === "capturing") {
-      setAppState("askMore");
-    }
-  };
-
-  const handleContinue = () => {
-    setAppState("bonusCapture");
   };
 
   const handleProceed = () => {
@@ -46,14 +35,12 @@ const Index = () => {
   };
 
   const canCapture =
-    (appState === "capturing" && photos.length < 3) ||
-    (appState === "bonusCapture" && photos.length < 4);
-
+    (appState === "capturing" && photos.length < 3)
   return (
     <div className="min-h-screen bg-background px-6 py-8 lg:px-12">
       <header className="mb-8 text-center">
         <h1 className="font-display text-4xl font-bold text-foreground">
-          Photobooth
+          ShutterFun
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Capture moments, create memories
@@ -73,17 +60,17 @@ const Index = () => {
               <div className="order-2 min-h-[300px]">
                 <PhotoPreviewStack photos={photos} />
                 
-                {appState === "askMore" && (
-                  <MorePhotosPrompt
-                    onProceed={handleProceed}
-                  />
-                )}
-
-                {appState === "bonusCapture" && photos.length < 4 && (
-                  <div className="animate-fade-in mt-4 rounded-xl bg-rose/20 p-3 text-center">
-                    <p className="text-sm text-muted-foreground">
-                      Capture your bonus photo!
-                    </p>
+                {/* Proceed Button - shows when 3 photos are captured */}
+                {appState === "capturing" && photos.length === 3 && (
+                  <div className="mt-4 flex justify-center">
+                    <Button
+                      size="lg"
+                      onClick={handleProceed}
+                      className="gap-2 rounded-xl px-8"
+                    >
+                      Proceed
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
                   </div>
                 )}
               </div>

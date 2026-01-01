@@ -36,7 +36,7 @@ const StripPicker = ({ selectedTemplate, onSelectTemplate }: StripPickerProps) =
               selectedTemplate === template.id ? "selected" : ""
             }`}
           >
-            <div className={`relative flex h-40 w-24 flex-col gap-1.5 ${template.bgColor} p-2`}>
+            <div className={`relative flex h-44 w-28 flex-col gap-1.5 ${template.bgColor} p-2`}>
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
